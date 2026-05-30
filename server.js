@@ -138,6 +138,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Lazy database initialization middleware for serverless environment compatibility
+app.use(async (req, res, next) => {
+  try {
+    const { pool } = await import("./config/db.js");
+    if (!pool) {
+      await initializeDb();
+    }
+    next();
+  } catch (error) {
+    console.error("Database initialization failed:", error);
+    res.status(500).json({ error: "Database initialization failed" });
+  }
+});
+
 app.use((req, res, next) => {
   console.log(`REQ ${req.method} ${req.url}`);
   next();
@@ -189,7 +203,7 @@ const startServer = async () => {
   }
 };
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   startServer();
 }
 
