@@ -25,8 +25,19 @@ const PORT = process.env.PORT || 3001;
 
 app.set("trust proxy", 1);
 
+const allowedOrigins = process.env.FRONTEND_ORIGIN 
+  ? process.env.FRONTEND_ORIGIN.split(',').map(o => o.trim()) 
+  : ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"];
+
 const corsOptions = {
-  origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked by CORS: ${origin}`);
+      callback(null, false);
+    }
+  },
   credentials: true,
 };
 
